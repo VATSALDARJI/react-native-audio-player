@@ -1,0 +1,138 @@
+# 📌 .gitignore for React Native Project
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn.lock
+.yarn/*
+package-lock.json
+
+# macOS system files
+.DS_Store
+
+# Build artifacts
+android/app/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+android/app/src/main/assets/index.android.bundle
+
+# iOS
+ios/Pods/
+ios/.DS_Store
+ios/build/
+ios/DerivedData/
+ios/*.xcworkspace
+ios/*.xcuserdatad
+ios/*.xcuserstate
+ios/*.xcuserdata
+
+# Expo & Metro Bundler
+.expo/
+.expo-shared/
+.babelrc
+metro.config.js
+
+# TypeScript
+*.tsbuildinfo
+
+# Debug & Logs
+*.log
+*.log.*
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Env Files
+.env
+.env.*
+
+# 📌 .gitignore for React Native Library
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn.lock
+.yarn/*
+package-lock.json
+
+# macOS system files
+.DS_Store
+ios/.DS_Store
+
+# Build artifacts
+android/.gradle/
+android/.idea/
+android/local.properties
+android/build/
+android/app/build/
+android/src/main/jni/CMakeLists.txt.user
+android/src/main/jni/build/
+android/src/main/jniLibs/
+android/app/src/main/assets/index.android.bundle
+android/app/src/main/res/raw/
+android/app/src/main/res/drawable/
+android/app/src/main/res/mipmap-*/
+*.hprof
+.cxx/
+lib/
+
+# Example app (if exists inside the library repo)
+example/node_modules/
+example/android/app/build/
+example/ios/Pods/
+example/.expo/
+example/.expo-shared/
+
+# iOS
+ios/Pods/
+ios/build/
+ios/DerivedData/
+ios/*.xcworkspace
+ios/*.xcuserdatad
+ios/*.xcuserstate
+ios/*.xcuserdata
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+
+# Expo & Metro Bundler
+.expo/
+.expo-shared/
+.babelrc
+metro.config.js
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug & Logs
+*.log
+*.log.*
+*.hprof
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# bfg report
+*.bfg-report

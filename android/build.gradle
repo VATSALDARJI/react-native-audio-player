@@ -1,0 +1,55 @@
+buildscript {
+    ext {
+        kotlin_version = project.property("kotlin.version")
+        agp_version = project.property("agp.version")
+    }
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:$agp_version")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace "com.vatsaldarji.audioplayer"
+
+    compileSdkVersion project.property("compile.sdk").toInteger()
+
+    defaultConfig {
+        minSdkVersion project.property("min.sdk").toInteger()
+        targetSdkVersion project.property("target.sdk").toInteger()
+        versionCode 1
+        versionName "1.0"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.toVersion(project.property("java.version"))
+        targetCompatibility JavaVersion.toVersion(project.property("java.version"))
+    }
+
+    kotlinOptions {
+        jvmTarget = project.property("java.version")
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    maven { url("$rootDir/../node_modules/react-native/android") }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "com.facebook.react:react-android:${project.property("reactNative.version")}"
+    implementation "androidx.media3:media3-exoplayer:${project.property("media3.version")}"
+    implementation "androidx.media3:media3-exoplayer-dash:${project.property("media3.version")}"
+    implementation "androidx.media3:media3-ui:${project.property("media3.version")}"
+}
