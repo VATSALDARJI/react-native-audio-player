@@ -25,6 +25,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import android.media.MediaPlayer
 
 class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
   private var player: ExoPlayer? = null
@@ -33,17 +34,18 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
   private val updateTasks = mutableMapOf<String, ScheduledFuture<*>>()
   private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
   private val positionUpdateIntervals = mutableMapOf<String, Long>()
-  
+  private val playerUrls = mutableMapOf<String, String>()
+
   companion object {
     private const val DEFAULT_POSITION_UPDATE_INTERVAL_MS = 200L
     
-    init {
-      try {
-        System.loadLibrary("react-native-audio-player")
-      } catch (e: Exception) {
-        e.printStackTrace()
-      }
-    }
+//    init {
+//      try {
+//        System.loadLibrary("react-native-audio-player")
+//      } catch (e: Exception) {
+//        e.printStackTrace()
+//      }
+//    }
   }
 
   override fun getName(): String {
@@ -53,6 +55,7 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
   @OptIn(UnstableApi::class)
   @ReactMethod
   fun initialize(playerId: String, promise: Promise) {
+    Log.d("AudioPlayerModule", "initialize method called")
     try {
       // Check if player with this ID already exists
       if (audioDataMap.containsKey(playerId)) {
@@ -72,7 +75,7 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
                   putString("playerId", playerId)
                 }
                 sendEvent(Events.ON_PLAYBACK_FINISHED, params)
-                stopPositionTracking(playerId)
+//                stopPositionTracking(playerId)
               }
               Player.STATE_READY -> {
                 val params = Arguments.createMap().apply {
@@ -92,9 +95,9 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
                 sendEvent(Events.ON_LOADED, loadedParams)
                 
                 // Start position tracking if player is ready
-                if (isPlaying) {
-                  startPositionTracking(playerId)
-                }
+//                if (isPlaying) {
+//                  startPositionTracking(playerId)
+//                }
               }
               Player.STATE_BUFFERING -> {
                 val params = Arguments.createMap().apply {
@@ -109,18 +112,18 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
                   putBoolean("isBuffering", false)
                 }
                 sendEvent(Events.ON_BUFFERING, params)
-                stopPositionTracking(playerId)
+//                stopPositionTracking(playerId)
               }
             }
           }
 
-          override fun onIsPlayingChanged(isPlaying: Boolean) {
-            if (isPlaying) {
-              startPositionTracking(playerId)
-            } else {
-              stopPositionTracking(playerId)
-            }
-          }
+//          override fun onIsPlayingChanged(isPlaying: Boolean) {
+//            if (isPlaying) {
+//              startPositionTracking(playerId)
+//            } else {
+//              stopPositionTracking(playerId)
+//            }
+//          }
 
           override fun onEvents(player: Player, events: Player.Events) {
             val bufferedPosition = player.bufferedPosition
@@ -143,48 +146,49 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
       audioDataMap[playerId] = audioData
       
       // Initialize update interval
-      positionUpdateIntervals[playerId] = DEFAULT_POSITION_UPDATE_INTERVAL_MS
+//      positionUpdateIntervals[playerId] = DEFAULT_POSITION_UPDATE_INTERVAL_MS
 
       promise.resolve(null)
     } catch (e: Exception) {
+      Log.d("AudioPlayerModule", "initial method error${e}")
       promise.reject("INIT_ERROR", e)
     }
   }
 
-  private fun startPositionTracking(playerId: String) {
-    stopPositionTracking(playerId) // Stop any existing tracking first
-    
-    val player = audioDataMap[playerId]?.getPlayer() ?: return
-    val interval = positionUpdateIntervals[playerId] ?: DEFAULT_POSITION_UPDATE_INTERVAL_MS
-    
-    val task = executor.scheduleAtFixedRate({
-      try {
-        if (player.isPlaying) {
-          val params = Arguments.createMap().apply {
-            putString("playerId", playerId)
-            putDouble("currentPosition", player.currentPosition.toDouble())
-            putDouble("duration", player.duration.toDouble())
-            putDouble("playbackSpeed", player.playbackParameters.speed.toDouble())
-          }
-          
-          // Use the UI thread to emit the event to React Native
-          reactApplicationContext.runOnUiQueueThread {
-            sendEvent(Events.ON_POSITION_CHANGED, params)
-          }
-        }
-      } catch (e: Exception) {
-        Log.e("AudioPlayerModule", "Error in position tracking", e)
-      }
-    }, 0, interval, TimeUnit.MILLISECONDS)
-    
-    updateTasks[playerId] = task
-  }
+//  private fun startPositionTracking(playerId: String) {
+//    stopPositionTracking(playerId) // Stop any existing tracking first
+//
+//    val player = audioDataMap[playerId]?.getPlayer() ?: return
+//    val interval = positionUpdateIntervals[playerId] ?: DEFAULT_POSITION_UPDATE_INTERVAL_MS
+//
+//    val task = executor.scheduleWithFixedDelay({
+//      try {
+//        if (player.isPlaying) {
+//          val params = Arguments.createMap().apply {
+//            putString("playerId", playerId)
+//            putDouble("currentPosition", player.currentPosition.toDouble())
+//            putDouble("duration", player.duration.toDouble())
+//            putDouble("playbackSpeed", player.playbackParameters.speed.toDouble())
+//          }
+//
+//          // Use the UI thread to emit the event to React Native
+//          reactApplicationContext.runOnUiQueueThread {
+//            sendEvent(Events.ON_POSITION_CHANGED, params)
+//          }
+//        }
+//      } catch (e: Exception) {
+//        Log.e("AudioPlayerModule", "Error in position tracking", e)
+//      }
+//    }, 0, interval, TimeUnit.MILLISECONDS)
+//
+//    updateTasks[playerId] = task
+//  }
   
-  private fun stopPositionTracking(playerId: String) {
-    val task = updateTasks[playerId] ?: return
-    task.cancel(false)
-    updateTasks.remove(playerId)
-  }
+//  private fun stopPositionTracking(playerId: String) {
+//    val task = updateTasks[playerId] ?: return
+//    task.cancel(false)
+//    updateTasks.remove(playerId)
+//  }
 
   @ReactMethod
   fun setPositionUpdateInterval(playerId: String, intervalMs: Double, promise: Promise) {
@@ -194,14 +198,14 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
         throw Exception("Position update interval must be at least 50ms")
       }
       
-      positionUpdateIntervals[playerId] = interval
+//      positionUpdateIntervals[playerId] = interval
       
       // If tracking is already active, restart it with the new interval
-      val player = audioDataMap[playerId]?.getPlayer()
-      if (player != null && player.isPlaying && updateTasks.containsKey(playerId)) {
-        stopPositionTracking(playerId)
-        startPositionTracking(playerId)
-      }
+//      val player = audioDataMap[playerId]?.getPlayer()
+//      if (player != null && player.isPlaying && updateTasks.containsKey(playerId)) {
+//        stopPositionTracking(playerId)
+//        startPositionTracking(playerId)
+//      }
       
       promise.resolve(null)
     } catch (e: Exception) {
@@ -218,6 +222,7 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
   @OptIn(UnstableApi::class)
   @ReactMethod
   fun load(playerId: String, url: String, promise: Promise) {
+    Log.d("AudioPlayerModule", "load method called")
     try {
       val audioData = audioDataMap[playerId] ?: throw Exception("Player not initialized")
       val player = audioData.getPlayer() ?: throw Exception("Player not initialized")
@@ -230,8 +235,14 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
         .createMediaSource(MediaItem.fromUri(url))
       player.setMediaSource(mediaSource)
       player.prepare()
+
+      // Generate and emit initial waveform data
+//      val waveformData = WaveformDataGenerator.generateWaveformData(url)
+//      emitWaveformData(playerId, waveformData, 0)
+
       promise.resolve(null)
     } catch (e: Exception) {
+      Log.d("AudioPlayerModule", "load method error${e}")
       promise.reject("LOAD_ERROR", e)
     }
   }
@@ -243,14 +254,17 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
     callback.invoke(players[playerId]?.currentPosition);
   }
 
+  @OptIn(UnstableApi::class)
   @ReactMethod
   fun play(playerId: String, promise: Promise) {
+    Log.d("AudioPlayerModule", "play method called")
     try {
       val audioData = audioDataMap[playerId] ?: throw Exception("Player not initialized")
       val player = audioData.getPlayer() ?: throw Exception("Player not initialized")
       player.play()
       promise.resolve(null)
     } catch (e: Exception) {
+      Log.d("AudioPlayerModule", "play method error${e}")
       promise.reject("PLAY_ERROR", e)
     }
   }
@@ -261,7 +275,7 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
       val audioData = audioDataMap[playerId] ?: throw Exception("Player not initialized")
       val player = audioData.getPlayer() ?: throw Exception("Player not initialized")
       player.pause()
-      promise.resolve(null)
+        promise.resolve(null)
     } catch (e: Exception) {
       promise.reject("PAUSE_ERROR", e)
     }
@@ -291,8 +305,10 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
     }
   }
 
-  @ReactMethod
+    @OptIn(UnstableApi::class)
+    @ReactMethod
   fun getDuration(playerId: String, promise: Promise) {
+    Log.d("AudioPlayerModule", "get duration method called")
     try {
       val audioData = audioDataMap[playerId] ?: throw Exception("Player not initialized")
       val player = audioData.getPlayer() ?: throw Exception("Player not initialized")
@@ -367,8 +383,8 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
       val player = audioData.getPlayer() ?: throw Exception("Player not initialized")
       
       // Stop position tracking
-      stopPositionTracking(playerId)
-      positionUpdateIntervals.remove(playerId)
+//      stopPositionTracking(playerId)
+//      positionUpdateIntervals.remove(playerId)
       
       player.release()
       promise.resolve(null)
@@ -394,7 +410,7 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
     audioDataMap.keys.toList().forEach { playerId ->
       try {
         val player = audioDataMap[playerId]?.getPlayer()
-        stopPositionTracking(playerId)
+//        stopPositionTracking(playerId)
         player?.release()
       } catch (e: Exception) {
         Log.e("AudioPlayerModule", "Error releasing player on destroy", e)
@@ -416,11 +432,43 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
   }
 
   // Native methods
-  private external fun nativePlay(url: String): String
-  private external fun nativePause(): String
-  private external fun nativeStop(): String
-  private external fun nativeGetCurrentPosition(): Long
-  private external fun nativeGetDuration(): Long
-  private external fun nativeGetBufferedPosition(): Long
-  private external fun nativeSeekTo(position: Double): String
+//  private external fun nativePlay(url: String): String
+//  private external fun nativePause(): String
+//  private external fun nativeStop(): String
+//  private external fun nativeGetCurrentPosition(): Long
+//  private external fun nativeGetDuration(): Long
+//  private external fun nativeGetBufferedPosition(): Long
+//  private external fun nativeSeekTo(position: Double): String
+
+  private fun emitWaveformData(playerId: String, waveformData: List<Float>, bufferedPosition: Long) {
+    Arguments.createMap().apply {
+      putString("playerId", playerId)
+      putArray("waveformData", Arguments.createArray().apply {
+        waveformData.forEach { value -> pushDouble(value.toDouble()) }
+      })
+      putDouble("bufferedPosition", bufferedPosition.toDouble())
+    }.also { event ->
+      reactApplicationContext
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+        .emit("onWaveformData", event)
+    }
+  }
+
+  @ReactMethod
+  fun getWaveformData(playerId: String, promise: Promise) {
+    try {
+      val url = playerUrls[playerId] ?: run {
+        promise.reject("ERROR", "Player not found")
+        return
+      }
+
+      val waveformData = WaveformDataGenerator.generateWaveformData(url)
+      Arguments.createArray().apply {
+        waveformData.forEach { value -> pushDouble(value.toDouble()) }
+        promise.resolve(this)
+      }
+    } catch (e: Exception) {
+      promise.reject("ERROR", e.message)
+    }
+  }
 }

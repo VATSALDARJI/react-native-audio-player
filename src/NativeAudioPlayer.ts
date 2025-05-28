@@ -2,10 +2,14 @@ import {
   NativeEventEmitter,
   NativeModules,
   TurboModuleRegistry,
-} from "react-native";
-import type { TurboModule } from "react-native";
-import type { AudioPlayerInterface, EventTypeMapping } from "./types";
-import { Events } from "./constants";
+} from 'react-native';
+import type { TurboModule } from 'react-native';
+import type {
+  AudioPlayerInterface,
+  EventTypeMapping,
+  WaveformDataEvent,
+} from './types';
+import { Events } from './constants';
 
 interface AudioPlayerSpec extends TurboModule, AudioPlayerInterface {}
 
@@ -13,7 +17,7 @@ const { AudioPlayerModule } = NativeModules;
 
 /** replace all methods using turbo module registry instead of traditional NativeModules package from react native */
 const NativeModule =
-  TurboModuleRegistry.getEnforcing<AudioPlayerSpec>("AudioPlayerModule");
+  TurboModuleRegistry.getEnforcing<AudioPlayerSpec>('AudioPlayerModule');
 
 // Create the event emitter
 export const eventEmitter = new NativeEventEmitter(AudioPlayerModule);
@@ -84,8 +88,8 @@ const AudioPlayer: AudioPlayerSpec = {
     return NativeModule.release(playerId);
   },
 
-  getWaveformData: (): Promise<number[]> => {
-    return NativeModule.getWaveformData();
+  getWaveformData: (playerId: string): Promise<number[]> => {
+    return NativeModule.getWaveformData(playerId);
   },
 
   getBufferedPosition: (): Promise<number> => {
@@ -93,7 +97,7 @@ const AudioPlayer: AudioPlayerSpec = {
   },
 
   addPositionListener: (callback: (position: number) => void) => {
-    const subscription = eventEmitter.addListener("positionUpdate", callback);
+    const subscription = eventEmitter.addListener('positionUpdate', callback);
     return {
       remove: () => subscription.remove(),
     };
@@ -133,6 +137,23 @@ const AudioPlayer: AudioPlayerSpec = {
     callback: (event: EventTypeMapping[T]) => void
   ) => {
     const subscription = eventEmitter.addListener(event, callback);
+    return {
+      remove: () => subscription.remove(),
+    };
+  },
+
+  addWaveformListener: (
+    playerId: string,
+    callback: (data: WaveformDataEvent) => void
+  ) => {
+    const subscription = eventEmitter.addListener(
+      Events.ON_WAVEFORM_DATA,
+      (event) => {
+        if (event.playerId === playerId) {
+          callback(event);
+        }
+      }
+    );
     return {
       remove: () => subscription.remove(),
     };

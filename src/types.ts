@@ -1,5 +1,5 @@
-import { NativeEventEmitter } from "react-native";
-import { Events } from "./constants";
+import { NativeEventEmitter } from 'react-native';
+import { Events } from './constants';
 
 export interface PlaybackStateEvent {
   playerId: string;
@@ -35,6 +35,12 @@ export interface PositionChangedEvent {
   playbackSpeed: number;
 }
 
+export interface WaveformDataEvent {
+  playerId: string;
+  waveformData: number[];
+  bufferedPosition: number;
+}
+
 // Event mapping to type interfaces
 export interface EventTypeMapping {
   [Events.ON_PLAYBACK_FINISHED]: PlaybackFinishedEvent;
@@ -43,6 +49,7 @@ export interface EventTypeMapping {
   [Events.ON_BUFFERING]: PlaybackBufferingEvent;
   [Events.ON_BUFFERED_PROGRESS]: BufferedProgressEvent;
   [Events.ON_POSITION_CHANGED]: PositionChangedEvent;
+  [Events.ON_WAVEFORM_DATA]: WaveformDataEvent;
 }
 
 export interface AudioPlayerInterface {
@@ -64,7 +71,7 @@ export interface AudioPlayerInterface {
     intervalMs: number
   ): Promise<void>;
   release(playerId: string): Promise<void>;
-  getWaveformData(): Promise<number[]>;
+  getWaveformData(playerId: string): Promise<number[]>;
   getBufferedPosition(): Promise<number>;
   addPositionListener(callback: (position: number) => void): {
     remove: () => void;
@@ -75,6 +82,12 @@ export interface AudioPlayerInterface {
   addBufferingListener(
     playerId: string,
     callback: (bufferedPosition: number) => void
+  ): {
+    remove: () => void;
+  };
+  addWaveformListener(
+    playerId: string,
+    callback: (data: WaveformDataEvent) => void
   ): {
     remove: () => void;
   };
