@@ -2,14 +2,13 @@
   "name": "react-native-audio-player",
   "version": "1.0.0",
   "description": "Audio player that plays from device and URL with customizable UI support.",
-  "main": "lib/commonjs/index.js",
-  "module": "lib/module/index.js",
-  "types": "lib/typescript/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/typescript/index.d.ts",
-      "import": "./lib/module/index.js",
-      "require": "./lib/commonjs/index.js"
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
     }
   },
   "files": [
@@ -27,12 +26,15 @@
     "!**/.*"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.json",
     "clean": "rimraf lib",
     "lint": "eslint src --ext .ts,.tsx",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "prepare": "yarn build"
+    "prepare": "yarn clean && yarn build",
+    "build:types": "tsc --project tsconfig.build.json",
+    "build:commonjs": "babel src --out-dir lib/commonjs --extensions '.ts,.tsx'",
+    "build:module": "babel src --out-dir lib/module --extensions '.ts,.tsx' --config-file babel.module.config.js",
+    "build": "yarn build:types && yarn build:commonjs && yarn build:module"
   },
   "peerDependencies": {
     "react": "^19.0.0",
