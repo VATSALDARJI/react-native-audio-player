@@ -1,5 +1,8 @@
 package com.audioplayer
 
+import android.media.MediaCodec
+import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.net.Uri
 import android.os.SystemClock
 import androidx.annotation.OptIn
@@ -26,6 +29,12 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import android.media.MediaPlayer
+import android.provider.ContactsContract.CommonDataKinds.Website.URL
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
+import java.nio.ByteOrder
+import kotlin.math.abs
 
 class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
   private val audioDataMap = mutableMapOf<String, AudioData>()
@@ -55,9 +64,7 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
       // Create ExoPlayer instance
       val player = ExoPlayer.Builder(reactApplicationContext).build().apply {
         addListener(object : Player.Listener {
-          override fun prepare() {
 
-          }
           override fun onPlaybackStateChanged(state: Int) {
             when (state) {
               Player.STATE_ENDED -> {
@@ -378,5 +385,101 @@ class AudioPlayerModule(reactContext: ReactApplicationContext) : ReactContextBas
     } catch (e: Exception) {
       promise.reject("ERROR", e.message)
     }
+  }
+
+  @ReactMethod
+  fun extractWaveformFromStreamedUrl(playerId: String, intervalMs: Int = 100): List<Float> {
+    val tmpFile = File.createTempFile("buffered_audio", ".mp3", reactApplicationContext.cacheDir)
+    tmpFile.deleteOnExit()
+
+    val url = audioDataMap[playerId]?.getUrlOrPath();
+
+    // Download some initial portion (e.g. 1MB)
+    val conn = URL(url).openConnection()
+    conn.connect()
+    val input = conn.getInputStream()
+    val output = FileOutputStream(tmpFile)
+
+    val buffer = ByteArray(1024 * 1024) // 1MB
+    val read = input.read(buffer)
+    output.write(buffer, 0, read)
+    output.close()
+    input.close()
+
+    // Now decode that downloaded portion
+    return decodePcmAndAnalyzeWaveform(tmpFile.absolutePath, intervalMs)
+  }
+
+    @UnstableApi
+    fun decodePcmAndAnalyzeWaveform(filePath: String, intervalMs: Int): List<Float> {
+    val extractor = MediaExtractor()
+    extractor.setDataSource(filePath)
+
+    val trackIndex = (0 until extractor.trackCount).firstOrNull {
+      extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true
+    } ?: throw RuntimeException("No audio track found")
+
+    extractor.selectTrack(trackIndex)
+    val format = extractor.getTrackFormat(trackIndex)
+    val mime = format.getString(MediaFormat.KEY_MIME)!!
+    val sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+    val channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+
+    val codec = MediaCodec.createDecoderByType(mime)
+    codec.configure(format, null, null, 0)
+    codec.start()
+
+    val info = MediaCodec.BufferInfo()
+    val waveform = mutableListOf<Float>()
+    val bufferChunk = mutableListOf<Short>()
+
+    var inputDone = false
+    var outputDone = false
+
+    while (!outputDone) {
+      if (!inputDone) {
+        val inputBufferIndex = codec.dequeueInputBuffer(10000)
+        if (inputBufferIndex >= 0) {
+          val inputBuffer = codec.getInputBuffer(inputBufferIndex)!!
+          val sampleSize = extractor.readSampleData(inputBuffer, 0)
+          if (sampleSize < 0) {
+            codec.queueInputBuffer(inputBufferIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+            inputDone = true
+          } else {
+            codec.queueInputBuffer(inputBufferIndex, 0, sampleSize, extractor.sampleTime, 0)
+            extractor.advance()
+          }
+        }
+      }
+
+      val outputBufferIndex = codec.dequeueOutputBuffer(info, 10000)
+      if (outputBufferIndex >= 0) {
+        val outputBuffer = codec.getOutputBuffer(outputBufferIndex)!!
+        outputBuffer.order(ByteOrder.nativeOrder())
+        while (outputBuffer.remaining() >= 2) {
+          val sample = outputBuffer.short
+          bufferChunk.add(sample)
+
+          // Once you have enough samples for interval
+          if (bufferChunk.size >= (sampleRate * intervalMs / 1000)) {
+            val peak = bufferChunk.maxOf { abs(it.toFloat()) } / 32768f
+            waveform.add(peak)
+            bufferChunk.clear()
+          }
+        }
+
+        codec.releaseOutputBuffer(outputBufferIndex, false)
+        if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+          outputDone = true
+        }
+      }
+    }
+
+    codec.stop()
+    codec.release()
+    extractor.release()
+    Log.e("AudioPlayerModuleWave", "Waveform extracted: $waveform")
+
+    return waveform
   }
 }
