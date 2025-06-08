@@ -43,7 +43,8 @@ const WaveformView: React.ComponentType<NativeWaveformViewProps> & { displayName
   UIManager.getViewManagerConfig(ComponentName) != null
     ? requireNativeComponent<NativeWaveformViewProps>(ComponentName)
     : () => {
-        throw new Error(LINKING_ERROR);
+        console.error(LINKING_ERROR);
+        return null;
       };
 
 WaveformView.displayName = ComponentName;
