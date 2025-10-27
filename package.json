@@ -1,5 +1,5 @@
 {
-  "name": "react-native-audio-player",
+  "name": "@vatsaldarji/react-native-audio-player",
   "version": "1.0.0",
   "description": "Audio player that plays from device and URL with customizable UI support.",
   "main": "lib/index.js",
@@ -11,6 +11,16 @@
       "require": "./lib/index.js"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VATSALDARJI/react-native-audio-player.git"
+  },
+  "author": "vatsal darji <vatsaldarji2428@gmail.com> (https://github.com/VATSALDARJI)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/VATSALDARJI/react-native-audio-player/issues"
+  },
+  "homepage": "https://github.com/VATSALDARJI/react-native-audio-player#readme",
   "files": [
     "src",
     "android",
@@ -33,7 +43,7 @@
     "prepare": "yarn clean && yarn build",
     "build:types": "tsc --project tsconfig.build.json",
     "build:commonjs": "babel src --out-dir lib/commonjs --extensions '.ts,.tsx'",
-    "build:module": "babel src --out-dir lib/module --extensions '.ts,.tsx' --config-file babel.module.config.js",
+    "build:module": "babel src --out-dir lib/module --extensions '.ts,.tsx' --config-file ./babel.module.config.js",
     "build": "yarn build:types && yarn build:commonjs && yarn build:module"
   },
   "peerDependencies": {
@@ -41,12 +51,17 @@
     "react-native": "^0.78.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.27.2",
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
     "@types/react": "^19.0.0",
     "@types/react-native": "^0.73.0",
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
-    "typescript": "^5.2.0",
-    "rimraf": "^5.0.0"
+    "rimraf": "^5.0.0",
+    "typescript": "^5.2.0"
   },
   "eslintConfig": {
     "root": true,
