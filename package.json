@@ -1,6 +1,6 @@
 {
   "name": "@vatsaldarji/react-native-audio-player",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Audio player that plays from device and URL with customizable UI support.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
