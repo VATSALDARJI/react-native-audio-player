@@ -11,6 +11,16 @@
       "require": "./lib/index.js"
     }
   },
+  "keywords": [
+    "react",
+    "react-native",
+    "typescript",
+    "rn",
+    "audio",
+    "audio-player",
+    "react-native-audio-player",
+    "react-native-audio"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/VATSALDARJI/react-native-audio-player.git"
