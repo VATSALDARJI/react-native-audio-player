@@ -1,6 +1,23 @@
+# Build and dependencies
 node_modules
-src
+lib
+dist
+build
+android/build
+ios/build
+
+# IDE and OS files
+*.log
+*.iml
+*.gradle
+.idea
+.vscode
+.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Example apps or test folders
 example
-scripts
-tsconfig.json
-babel.*
+__tests__
